@@ -1,8 +1,8 @@
 import subprocess
 import os
 import codecs
-
 import sys
+
 
 def is_64_windows():
     return 'PROGRAMFILES(X86)' in os.environ
