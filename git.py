@@ -1,5 +1,6 @@
 import subprocess
 import os
+import codecs
 
 
 def is_64_windows():
@@ -22,4 +23,4 @@ def get_program_files_64():
 
 def git(args=[]):
     cmd = [get_program_files_32() + '/Git/bin/git.exe']
-    return subprocess.getoutput(cmd + args)
+    return codecs.decode(subprocess.check_output(cmd + args), 'utf-8')
