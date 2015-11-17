@@ -10,20 +10,38 @@ def remove_row(table, row):
     tbl.remove(tr)
 
 
-def duplicate_row(table, row, n):
+def duplicate_row(table, row, n, c):
     cells = table.add_row().cells
     for i, cell in enumerate(row.cells):
-        cells[i].text = cell.text + "#" + str(n) + "#"
+        if '{commit.seq}' in cell.text:
+            cells[i].text = cell.text.replace('{commit.seq}', str(n + 1))
+            continue
+        elif '{commit.module}' in cell.text:
+            cells[i].text = cell.text.replace('{commit.module}',
+                                              os.path.dirname(os.path.join(c.files[n])).split('/')[0])
+            continue
+        elif '{commit.file_path}' in cell.text:
+            cells[i].text = cell.text.replace('{commit.file_path}', os.path.dirname(os.path.join(c.files[n])))
+            continue
+        elif '{commit.file_name}' in cell.text:
+            cells[i].text = cell.text.replace('{commit.file_name}', os.path.basename(os.path.join(c.files[n])))
+            continue
+        elif '{commit.mod}' in cell.text:
+            cells[i].text = cell.text.replace('{commit.mod}', c.mods[n])
+            continue
+        else:
+            cells[i].text = cell.text
 
 
-def duplicate_row_times(table, row, n):
+def duplicate_row_times(table, row, n, commit):
     for i in range(n):
-        duplicate_row(table, row, i)
+        duplicate_row(table, row, i, commit)
+        update_progress(i / n)
     remove_row(table, row)
 
 
 # duplicate_row_when(document, "{row}")
-def duplicate_row_when(doc, when, n):
+def duplicate_row_when(doc, when, n, commit):
     for table in doc.tables:
         for row in table.rows:
             need_rows = False
@@ -37,7 +55,7 @@ def duplicate_row_when(doc, when, n):
                 if need_rows:
                     break
             if need_rows:
-                duplicate_row_times(table, row, n)
+                duplicate_row_times(table, row, n, commit)
 
 
 def change_working_dir():
@@ -62,9 +80,9 @@ def getargv():
     return hash_id
 
 
-def get_dir_list(rootdir):
+def get_dir_list(path):
     lists = []
-    for root, subFolders, files in os.walk(rootdir):
+    for root, subFolders, files in os.walk(path):
         for folder in subFolders:
             lists.append(folder)
         break
@@ -76,14 +94,17 @@ def update_progress(progress):
     print('\r[{0}{1}] {2}%'.format('#' * int(progress * width), '=' * (width - int(progress * width)),
                                    int(progress * 100)), end='')
 
+
 # ------------------
 
 c = commit.Commit(getargv())
-# c.dump()
+c.dump()
+print(len(c.files))
 
 dir_list = get_dir_list(os.getcwd())
 
 input_file = 'input.docx'
+
 for item in dir_list:
     if "SKB" in item:
         input_file = 'skbtpl.docx'
@@ -96,28 +117,6 @@ for item in dir_list:
         break
 
 document = Document(os.path.dirname(sys.argv[0]) + '/resource/' + input_file)
-duplicate_row_when(document, "{row}", len(c.files))
-
-for i, file in enumerate(c.files):
-    # WTF '}'
-    # last row will not be replaced if you use WTF '}'
-    document.cell_replace('{commit.mod}' + '#' + str(i) + '#', c.mods[i])
-    document.cell_replace('{commit.file_path}' + '#' + str(i) + '#', os.path.dirname(os.path.join(c.files[i])))
-    document.cell_replace('{commit.author_date}' + '#' + str(i) + '#', c.author_date)
-    document.cell_replace('{commit.author_name}' + '#' + str(i) + '#', c.author_name)
-    document.cell_replace('{commit.file_name}' + '#' + str(i) + '#', os.path.basename(os.path.join(c.files[i])))
-    document.cell_replace('{commit.seq}' + '#' + str(i) + '#', str(i + 1))
-    document.cell_replace('{commit.module}' + '#' + str(i) + '#',
-                          os.path.dirname(os.path.join(c.files[i])).split('/')[0])
-    document.cell_replace('#' + str(i) + '#', '')
-    update_progress(i / len(c.mods))
-
-document.cell_replace('{commit.author_name}', c.author_name.strip('\n'))
-document.cell_replace('{commit.author_date}', c.author_date.strip('\n'))
-document.cell_replace('{commit.author_email}', ' <' + c.author_email.strip('\n') + '>')
-document.cell_replace('{commit.subject}', '     ' + c.subject.strip('\n'))
-document.cell_replace('{commit.message}', '     ' + c.message.strip('\n'))
-document.cell_replace('{commit.id}', c.id.strip('\n'))
 
 if input_file in 'esuntpl.docx':
     document.cell_replace('{commit.project_name}', '玉山應收帳款承購管理系統')
@@ -129,5 +128,13 @@ if input_file in 'ytbktpl.docx':
     document.cell_replace('{commit.project_name}', '元大應收帳款承購管理系統')
     document.cell_replace('{commit.project_id}', 'CSPSDEV1')
 
+document.cell_replace('{commit.author_name}', c.author_name.strip('\n'))
+document.cell_replace('{commit.author_date}', c.author_date.strip('\n'))
+document.cell_replace('{commit.author_email}', ' <' + c.author_email.strip('\n') + '>')
+document.cell_replace('{commit.subject}', '     ' + c.subject.strip('\n'))
+document.cell_replace('{commit.message}', '     ' + c.message.strip('\n'))
+document.cell_replace('{commit.id}', c.id.strip('\n'))
+
+duplicate_row_when(document, "{row}", len(c.files), c)
 document.save('./' + 'commit' + '.docx')
 update_progress(1)
