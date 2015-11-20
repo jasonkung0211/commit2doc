@@ -1,4 +1,7 @@
 from datetime import datetime
+
+import subprocess
+
 from git import git
 
 
