@@ -30,4 +30,4 @@ def git(args=[]):
     else:
         print('git.exe is missing')
         sys.exit()
-    return codecs.decode(subprocess.check_output(cmd + args), 'utf-8')
+    return codecs.decode(subprocess.check_output(cmd + args), 'utf-8').strip()

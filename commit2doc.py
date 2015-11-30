@@ -11,6 +11,7 @@ import re
 def insert_rows(self, row_idx, cnt, above, copy_style, fill_formulae):
     """Inserts new (empty) rows into worksheet at specified row index.
 
+    :param self:
     :param row_idx: Row index specifying where to insert new rows.
     :param cnt: Number of rows to insert.
     :param above: Set True to insert rows above specified row index.
@@ -242,6 +243,19 @@ def cell_replace(doc, search, replace):
                             paragraph.add_run(paragraph_text.replace(search, replace))
 
 
+def cell_replace(doc, search, replace):
+    searchre = re.compile(search)
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    paragraph_text = paragraph.text
+                    if paragraph_text:
+                        if searchre.search(paragraph_text):
+                            clear_paragraph(paragraph)
+                            paragraph.add_run(paragraph_text.replace(search, replace))
+
+
 def clear_paragraph(paragraph):
     p_element = paragraph._p
     p_child_elements = [elm for elm in p_element.iterchildren()]
@@ -249,10 +263,17 @@ def clear_paragraph(paragraph):
         p_element.remove(child_element)
 
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+
+    return os.path.join(os.path.abspath("."), relative_path)
+
 # ------------------
 
 c = commit.Commit(getargv())
-c.dump()
+# c.dump()
 
 dir_list = get_dir_list(os.getcwd())
 
@@ -290,7 +311,7 @@ if input_file in 'ytbktpl.docx':
     cell_replace(document, '{commit.project_id}', 'CSPSDEV1')
 if input_file in 'ibttpl.xlsx':
     cell_rewrite(ws, '{commit.project_name}', 'IBT台工銀應收帳款承購管理系統', True)
-    cell_rewrite(ws, '{commit.project_id}', 'CSPS_IBT156', True)
+    cell_rewrite(ws, '{commit.project_id}', 'CSPSDB_IBT156', True)
 
 if '.xlsx' in input_file:
     cell_rewrite(ws, '{commit.author_name}', c.author_name.strip('\n'), True)
@@ -300,16 +321,15 @@ if '.xlsx' in input_file:
     cell_rewrite(ws, '{commit.message}', '     ' + c.message.strip('\n'), True)
     cell_rewrite(ws, '{commit.id}', c.id.strip('\n'), True)
 
-    duplicate_row(ws, len(c.files) -1)
+    duplicate_row(ws, len(c.files) - 1)
 
-    for num in range(0,len(c.files)):
+    for num in range(0, len(c.files)):
         cell_rewrite(ws, '{commit.file_name}', os.path.basename(os.path.join(c.files[num])), False)
         cell_rewrite(ws, '{commit.seq}', str(num+1), False)
         cell_rewrite(ws, '{commit.module}', os.path.dirname(os.path.join(c.files[num])).split('/')[0], False)
         cell_rewrite(ws, '{commit.file_path}', os.path.dirname(os.path.join(c.files[num])), False)
         cell_rewrite(ws, '{commit.mod}', c.mods[num], False)
-        #cell_rewrite(ws, '{commit._size}', c.file_size[num], False)TODO: get file size
-
+        # cell_rewrite(ws, '{commit._size}', c.file_size[num], False)TODO: get file size
 
     cell_rewrite(ws, '{row}', '', True)
     wb.save('./commit.xlsx')
