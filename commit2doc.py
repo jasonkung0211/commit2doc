@@ -6,6 +6,9 @@ import commit
 from openpyxl import load_workbook
 from openpyxl.cell import *
 import re
+import logging
+
+from toLogger import ToLogger
 
 
 def insert_rows(self, row_idx, cnt, above, copy_style, fill_formulae):
@@ -178,10 +181,11 @@ def change_working_dir():
     os.chdir(os.getcwd())
 
 
+"""
 def getargv():
     version = "1.0.00"
     help = '......(;==)'
-    hash_id = "HEAD"
+    _id = "HEAD"
     if len(sys.argv) >= 2:
         if sys.argv[1].startswith('--'):
             option = sys.argv[1][2:]
@@ -191,8 +195,9 @@ def getargv():
                 print(help)
             sys.exit()
         else:
-            hash_id = sys.argv[1]
-    return hash_id
+            _id = sys.argv[1]
+    return _id
+"""
 
 
 def get_dir_list(path):
@@ -271,9 +276,20 @@ def resource_path(relative_path):
     return os.path.join(os.path.abspath("."), relative_path)
 
 # ------------------
+debug = False
 
-c = commit.Commit(getargv())
-# c.dump()
+if debug:
+    stdout_logger = logging.getLogger('STDOUT')
+    sl = ToLogger(stdout_logger, logging.INFO)
+    sys.stdout = sl
+
+    stderr_logger = logging.getLogger('STDERR')
+    sl = ToLogger(stderr_logger, logging.ERROR)
+    sys.stderr = sl
+
+c = commit.Commit('HEAD')
+if debug:
+    c.dump()
 
 dir_list = get_dir_list(os.getcwd())
 

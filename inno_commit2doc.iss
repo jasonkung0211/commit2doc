@@ -38,4 +38,8 @@ Source: "C:\Users\User\PycharmProjects\commit2doc\resource\*"; DestDir: "{app}\r
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
+[Registry]
+Root: HKCR; Subkey: "Directory\Background\shell\commit2doc"; ValueType: string; ValueData: "Commit2Doc for Git"
+Root: HKCR; Subkey: "Directory\Background\shell\commit2doc\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" ""%v"""
+
 
